@@ -1,5 +1,3 @@
-import WebSocket from 'modern-isomorphic-ws'
-
 /**
  * Messages sent by the game (client) to Neuro (server).
  */

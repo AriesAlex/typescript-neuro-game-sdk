@@ -27,8 +27,7 @@
   "author": "ArieX",
   "license": "MIT",
   "dependencies": {
-    "tslib": "^2.8.1",
-    "modern-isomorphic-ws": "^1.0.5"
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.2",
