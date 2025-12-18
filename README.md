@@ -142,3 +142,9 @@ const neuroClient = new NeuroClient(NEURO_SERVER_URL, GAME_NAME, () => {
 ```
 
 > Happy coding! <3 - ArieX
+
+## Projects using this SDK
+
+The following integrations use this SDK:
+
+- [NeuroPilot](https://github.com/VSC-NeuroPilot/neuropilot) by VSC-NeuroPilot (Pasu4, KTrain5369, Frogneko)
