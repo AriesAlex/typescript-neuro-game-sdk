@@ -32,8 +32,11 @@ jobs:
                 cache-dependency-path: './package-lock.json'
                 registry-url: 'https://registry.npmjs.org'
             
-            - name: Install and build package
-              run: npm install
+            - name: Setup Git, install and build package
+              run: |
+                git config user.name "GitHub Actions"
+                git config user.email actions@github.com
+                npm install
             
             - name: Tag version
               if: inputs.bump != 'none'
