@@ -25,6 +25,7 @@
     "integration"
   ],
   "author": "ArieX",
+  "maintainers": ["ktrain5369"],
   "license": "MIT",
   "dependencies": {
     "tslib": "^2.8.1",
