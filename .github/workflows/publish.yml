@@ -36,6 +36,7 @@ jobs:
               run: |
                 git config user.name "GitHub Actions"
                 git config user.email actions@github.com
+                npm install -g npm@latest
                 npm install
             
             - name: Tag version
