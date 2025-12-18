@@ -37,7 +37,10 @@ jobs:
             
             - name: Tag version
               if: inputs.bump != 'none'
-              run: npm version ${{ inputs.bump }} && git push
+              run: |
+                git reset --hard
+                npm version ${{ inputs.bump }}
+                git push
             
             - name: Publish to npm
               run: npm publish --access public
