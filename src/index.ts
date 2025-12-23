@@ -115,7 +115,7 @@ interface ForceActionsMessageData {
 
   /**
    * The priority of action forces.
-   * Ranges from 'low' to 'critical'. 'critical' cuts off speech immediately, `medium` and `high` does some prompting to finish speaking earlier/respond ASAP.
+   * Ranges from `low` to `critical`. `critical` cuts off speech immediately, `medium` and `high` does some prompting to finish speaking earlier/respond ASAP.
    * Previously always set to low.
    */
   priority?: ActionForcePriorityEnum
