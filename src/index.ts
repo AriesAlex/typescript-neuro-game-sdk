@@ -163,6 +163,20 @@ interface ForceActionsMessageData {
 
   /** The names of the actions that Neuro should choose from. */
   action_names: string[]
+
+  /**
+   * The priority of action forces.
+   * Ranges from `low` to `critical`. `critical` cuts off speech immediately, `medium` and `high` does some prompting to finish speaking earlier/respond ASAP.
+   * Previously always set to low.
+   */
+  priority?: ActionForcePriorityEnum
+}
+
+export const enum ActionForcePriorityEnum {
+  LOW = "low",
+  MEDIUM = "medium",
+  HIGH = "high",
+  CRITICAL = "critical",
 }
 
 /**
@@ -423,12 +437,14 @@ export class NeuroClient {
    * @param actionNames The names of the actions that Neuro should choose from.
    * @param state An arbitrary string that describes the current state of the game.
    * @param ephemeralContext If true, Neuro will only remember the context for the duration of the actions force.
+   * @param priority The action force's priority level. Defaults to `low`.
    */
   public forceActions(
     query: string,
     actionNames: string[],
     state?: string,
-    ephemeralContext: boolean = false
+    ephemeralContext: boolean = false,
+    priority: ActionForcePriorityEnum = ActionForcePriorityEnum.LOW
   ) {
     const message: OutgoingMessage = {
       command: 'actions/force',
@@ -437,6 +453,7 @@ export class NeuroClient {
         state: state,
         query: query,
         ephemeral_context: ephemeralContext,
+        priority,
         action_names: actionNames,
       } as ForceActionsMessageData,
     }

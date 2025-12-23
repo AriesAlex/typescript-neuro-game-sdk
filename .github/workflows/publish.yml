@@ -1,0 +1,50 @@
+name: Publish SDK
+
+on:
+    workflow_dispatch:
+        inputs:
+            bump:
+                required: true
+                description: Bump which semver part?
+                type: choice
+                options:
+                    - major
+                    - minor
+                    - patch
+                    - none
+jobs:
+    publish:
+        name: Publish to npm
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            id-token: write
+        if: github.repository == 'AriesAlex/typescript-neuro-game-sdk'
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v5
+            
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                node-version: 22.14.x
+                cache: 'npm'
+                cache-dependency-path: './package-lock.json'
+                registry-url: 'https://registry.npmjs.org'
+            
+            - name: Setup Git, install and build package
+              run: |
+                git config user.name "GitHub Actions"
+                git config user.email actions@github.com
+                npm install -g npm@latest
+                npm install
+            
+            - name: Tag version
+              if: inputs.bump != 'none'
+              run: |
+                git reset --hard
+                npm version ${{ inputs.bump }}
+                git push
+            
+            - name: Publish to npm
+              run: npm publish --access public
