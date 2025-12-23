@@ -1,4 +1,32 @@
 import WebSocket from 'modern-isomorphic-ws'
+import type { JSONSchema7, JSONSchema7Object } from 'json-schema';
+
+/**
+ * Proposed commands, not used by Neuro yet:
+ * - "actions/reregister_all"
+ * - "shutdown/graceful"
+ * - "shutdown/immediate"
+ * 
+ * As suck, this SDK does not implement handling of those commands.
+ */
+type IncomingCommands = "action"
+  | "actions/reregister_all"
+  | "shutdown/graceful"
+  | "shutdown/immediate"
+
+type IncomingData = GracefulShutdownMessageData | ActionMessageData
+
+/**
+ * Data for 'shutdown/graceful' from Neuro.
+ */
+interface GracefulShutdownMessageData {
+  /** 
+   * Whether or not Neuro wants to shut down the game.
+   * If `true`, save the game and return to main menu if possible.
+   * If `false`, cancel the shutdown process.
+   */
+  wants_shutdown: boolean
+}
 
 /**
  * Messages sent by the game (client) to Neuro (server).
@@ -25,10 +53,10 @@ interface OutgoingMessage {
  */
 interface IncomingMessage {
   /** The websocket command. */
-  command: string
+  command: IncomingCommands
 
   /** The command data, may not be present for some commands. */
-  data?: any
+  data?: IncomingData
 }
 
 /**
@@ -51,7 +79,30 @@ export interface Action {
    * A valid simple JSON schema object that describes how the response data should look like.
    * If your action does not have any parameters, you can omit this field or set it to {}.
    */
-  schema?: any
+  schema?: Omit<JSONSchema7, 'type'> & { type: 'object' } // for top-level schema it must be an object
+}
+
+/**
+ * This is parsed action data received from Neuro, ready to be used by handlers.
+ */
+export interface ActionData {
+  /**
+   * The ID of the action attempt, assigned by the server.
+   * You will want to use this when returning action results.
+   */
+  id: string
+  /**
+   * The name of the action that Neuro wants to execute.
+   */
+  name: string
+  /**
+   * Parameter data sent from Neuro.
+   * This will automatically be parsed into a JSON object for you.
+   * You also don't need to worry about this being potentially invalid JSON, as the SDK automatically handles that.
+   * 
+   * If no params are sent, this property will simply be an empty object {}.
+   */
+  params: JSONSchema7Object
 }
 
 /**
@@ -176,11 +227,7 @@ interface ActionMessageData {
 /**
  * The type of the action handler function.
  */
-type ActionHandler = (actionData: {
-  id: string
-  name: string
-  params: any
-}) => void
+type ActionHandler = (actionData: ActionData) => void
 
 /**
  * The NeuroClient class handles communication with Neuro-sama's server.
@@ -209,12 +256,12 @@ export class NeuroClient {
   /**
    * Handler for WebSocket 'close' events.
    */
-  public onClose?: (event: any) => void
+  public onClose?: (event: WebSocket.CloseEvent) => void
 
   /**
    * Handler for WebSocket 'error' events.
    */
-  public onError?: (error: any) => void
+  public onError?: (error: WebSocket.ErrorEvent) => void
 
   /**
    * Creates an instance of NeuroClient.
@@ -241,12 +288,12 @@ export class NeuroClient {
       onConnected()
     }
 
-    this.ws.onmessage = (event: any) => {
+    this.ws.onmessage = (event: WebSocket.MessageEvent) => {
       const data = typeof event.data === 'string' ? event.data : ''
       this.handleMessage(data)
     }
 
-    this.ws.onclose = (event: any) => {
+    this.ws.onclose = (event: WebSocket.CloseEvent) => {
       if (this.onClose) {
         this.onClose(event)
       } else {
@@ -254,7 +301,7 @@ export class NeuroClient {
       }
     }
 
-    this.ws.onerror = (error: any) => {
+    this.ws.onerror = (error: WebSocket.ErrorEvent) => {
       if (this.onError) {
         this.onError(error)
       } else {
@@ -303,10 +350,10 @@ export class NeuroClient {
     }
     switch (message.command) {
       case 'action':
-        this.handleActionMessage(message.data)
+        this.handleActionMessage(message.data as ActionMessageData)
         break
       default:
-        console.warn('[NeuroClient] Received unknown command:', message.command)
+        console.warn('[NeuroClient] Received unknown/unimplemented command:', message.command)
     }
   }
 
@@ -315,12 +362,12 @@ export class NeuroClient {
    * @param data The action message data.
    */
   private handleActionMessage(data: ActionMessageData) {
-    let actionParams: any = {}
+    let actionParams: JSONSchema7Object = {}
     if (data.data) {
       try {
         actionParams = JSON.parse(data.data)
-      } catch (error: any) {
-        const errorMessage = `Invalid action data: ${error.message}`
+      } catch (error: unknown) {
+        const errorMessage = `Invalid action data: ${(error as Error).message}`
         this.sendActionResult(data.id, false, errorMessage)
         console.error(`[NeuroClient] ${errorMessage}`)
         return
@@ -329,7 +376,7 @@ export class NeuroClient {
 
     if (this.actionHandlers.length > 0) {
       for (const handler of this.actionHandlers) {
-        handler({ id: data.id, name: data.name, params: actionParams })
+        handler({ id: data.id, name: data.name, params: actionParams } as ActionData)
       }
     } else {
       console.warn('[NeuroClient] No action handlers registered.')
@@ -421,6 +468,7 @@ export class NeuroClient {
    * @param messageText A plaintext message that describes what happened when the action was executed.
    */
   public sendActionResult(id: string, success: boolean, messageText?: string) {
+    if (!success) console.warn(`[NeuroClient] Empty messageText field even though success was false!`)
     const message: OutgoingMessage = {
       command: 'action/result',
       game: this.game,
