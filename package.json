@@ -30,6 +30,8 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@types/json-schema": "^7.0.15",
+    "@types/ws": "^8.18.1",
     "modern-isomorphic-ws": "^1.0.5",
     "tslib": "^2.8.1"
   },
@@ -42,5 +44,10 @@
   },
   "peerDependencies": {
     "jsonschema": "^1.5.0"
+  },
+  "peerDependenciesMeta": {
+    "jsonschema": {
+      "optional": true
+    }
   }
 }
