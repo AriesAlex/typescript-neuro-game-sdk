@@ -279,7 +279,7 @@ export class NeuroClient {
    * Initializes the WebSocket connection.
    * @param onConnected Callback invoked when the WebSocket connection is established.
    */
-  private connect(onConnected: () => void) {
+  protected connect(onConnected: () => void) {
     this.ws = new WebSocket(this.url)
 
     this.ws.onopen = () => {
@@ -361,7 +361,7 @@ export class NeuroClient {
    * Handles 'action' messages from Neuro-sama.
    * @param data The action message data.
    */
-  private handleActionMessage(data: ActionMessageData) {
+  protected handleActionMessage(data: ActionMessageData) {
     let actionParams: JSONSchema7Object = {}
     if (data.data) {
       try {
