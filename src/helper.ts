@@ -1,5 +1,9 @@
 import { validate } from "jsonschema";
 import { Action, ActionData, ActionForcePriorityEnum, NeuroClient } from ".";
+import { JSONSchema7Object } from "json-schema";
+import { ActionMessageData } from "./types";
+
+export { Action, ActionData, ActionForcePriorityEnum } from "./types"
 
 /**
  * This is a wrapper class intended to help automate some common actions with the NeuroClient.
@@ -10,24 +14,53 @@ export class NeuroClientWrapper extends NeuroClient {
     constructor(url: string, game: string, onConnected: () => void = () => undefined) {
         super(url, game, onConnected)
         this.actionHandlers.push(this.actionHandler)
+        this.handleActionMessage = this.actionHandler
     }
 
     //public postActionCheckHandler: () => void
 
     private registeredActions: Action[] = []
 
-    private actionHandler(actionData: ActionData) {
-        if (this.actionHandled) {
-            this.actionHandled = false
-            return
+    private actionHandler(data: ActionMessageData) {
+        let actionParams: JSONSchema7Object = {}
+        if (data.data) {
+            try {
+                actionParams = JSON.parse(data.data)
+            } catch (error: unknown) {
+                const errorMessage = `Invalid action data: ${(error as Error).message}`
+                this.sendActionResult(data.id, false, errorMessage)
+                console.error(`[NeuroClient] ${errorMessage}`)
+                return
+            }
         }
-        const action = this.registeredActions.find((a) => a.name === actionData.name)
+
+        const action = this.registeredActions.find((a) => a.name === data.name)
         if (!action) {
-            this.sendActionResult(actionData.id, true, `[NeuroClient] Unknown action: "${actionData.name}"`)
+            this.sendActionResult(data.id, true, `[NeuroClientWrapper] Unknown action: "${data.name}"`)
             return
         }
         if (action.schema) {
-            const schemaValidation = validate(actionData.params, action.schema)
+            const schemaValidationResult = validate(actionParams, action.schema)
+            if (!schemaValidationResult.valid) {
+                const messagesArray: string[] = []
+                schemaValidationResult.errors.map((err) => {
+                    if (err.stack.startsWith('instance.')) messagesArray.push(err.stack.substring(9));
+                    else messagesArray.push(err.stack);
+                });
+                if (messagesArray.length === 0) messagesArray.push('Unknown schema validation error.');
+                const schemaFailures = `- ${messagesArray.join('\n- ')}`;
+                const message = `[NeuroClientWrapper] Your inputs for the action "${data.name}" did not pass schema validation.\n\n' + schemaFailures + '\n\nPlease pay attention to the schema and the above errors if you choose to retry.`;
+                this.sendActionResult(data.id, false, message)
+                return
+            }
+        }
+
+        if (this.actionHandlers.length > 0) {
+            for (const handler of this.actionHandlers) {
+                handler({ id: data.id, name: data.name, params: actionParams } as ActionData)
+            }
+        } else {
+            console.warn('[NeuroClient] No action handlers registered.')
         }
     }
 }
@@ -72,7 +105,7 @@ export class _wrapper {
         this.client.disconnect()
         this.client = client ?? this.initClient(this.client.url, this.client.game)
     }
-    
+
     /**
      * This static method allows you to create a new wrapper using details from your old NeuroClient.
      * Your old NeuroClient will be disconnected and a new NeuroClient will be established.
@@ -130,7 +163,7 @@ export class _wrapper {
         }
         if (action.schema) {
             const schemaValidation = validate(actionData.params, action.schema)
-            if (!schemaValidation.valid) {}
+            if (!schemaValidation.valid) { }
         }
     }
 
