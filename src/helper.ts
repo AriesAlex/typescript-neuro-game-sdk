@@ -1,7 +1,7 @@
 import { validate } from "jsonschema";
 import { NeuroClient } from ".";
 import { JSONSchema7Object } from "json-schema";
-import { Action, ActionData, ActionForcePriorityEnum, ActionMessageData } from "./types";
+import { Action, ActionData, ActionForcePriorityEnum, ActionMessageData, OutgoingMessage, RegisterActionsMessageData, UnregisterActionsMessageData } from "./types";
 
 export { Action, ActionData, ActionForcePriorityEnum } from "./types"
 
@@ -97,6 +97,43 @@ export class NeuroClientWrapper extends NeuroClient {
         } else {
             console.warn('[NeuroClient] No action handlers registered.')
         }
+    }
+
+    public registerActions(actions: Action[]) {
+        const knownActions: string[] = []
+        for (const a of actions) if (this.registeredActions.find(_a => a.name === _a.name)) knownActions.push(a.name);
+        if (knownActions.length !== 0) this.loggingHandler(`Duplicate action registered: "${knownActions.join('", "')}"\nThe Neuro server will ignore those registrations.`, LogLevel.WARN);
+        this.registeredActions.push(...actions)
+
+        const message: OutgoingMessage = {
+            command: 'actions/register',
+            game: this.game,
+            data: {
+                actions,
+            } as RegisterActionsMessageData,
+        }
+
+        this.sendMessage(message)
+    }
+
+    public unregisterActions(actionNames: string[]) {
+        const unknownNames: string[] = []
+        for (const n of actionNames) {
+            const action = this.registeredActions.findIndex(a => a.name === n)
+            if (action === -1) unknownNames.push(this.registeredActions[action].name)
+            else this.registeredActions.splice(action, 1)
+        }
+        if (unknownNames.length !== 0) this.loggingHandler(`Actions not registered: "${unknownNames.join('", "')}"\nThe Neuro server will ignore those unregistrations.`, LogLevel.INFO)
+        
+        const message: OutgoingMessage = {
+            command: 'actions/unregister',
+            game: this.game,
+            data: {
+                action_names: actionNames,
+            } as UnregisterActionsMessageData,
+        }
+
+        this.sendMessage(message)
     }
 }
 
