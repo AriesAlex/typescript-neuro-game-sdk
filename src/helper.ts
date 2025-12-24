@@ -1,7 +1,7 @@
 import { validate } from "jsonschema";
-import { Action, ActionData, ActionForcePriorityEnum, NeuroClient } from ".";
+import { NeuroClient } from ".";
 import { JSONSchema7Object } from "json-schema";
-import { ActionMessageData } from "./types";
+import { Action, ActionData, ActionForcePriorityEnum, ActionMessageData } from "./types";
 
 export { Action, ActionData, ActionForcePriorityEnum } from "./types"
 
@@ -15,6 +15,41 @@ export class NeuroClientWrapper extends NeuroClient {
         super(url, game, onConnected)
         this.actionHandlers.push(this.actionHandler)
         this.handleActionMessage = this.actionHandler
+    }
+
+    /**
+     * Handler for logging events with the SDK.
+     * @param message The message to log
+     * @param level The log level of the message.
+     */
+    public loggingHandler: (message: string, type: LogLevel) => void = (message: string, level: LogLevel) => {
+        switch (level) {
+            case LogLevel.DEBUG:
+                console.debug(message)
+                break
+            case LogLevel.LOG:
+                console.log(message)
+                break
+            case LogLevel.INFO:
+                console.info(message)
+                break
+            case LogLevel.WARN:
+                console.warn(message)
+                break
+            case LogLevel.ERROR:
+                console.error(message)
+                break
+        }
+    }
+
+    /**
+     * Reconnects the NeuroClient.
+     * @param url The Neuro API URl. If this is not provided, the existing URL will be used.
+     */
+    public reconnect(url?: string) {
+        this.disconnect()
+        if (url) this.url = url
+        this.connect()
     }
 
     //public postActionCheckHandler: () => void

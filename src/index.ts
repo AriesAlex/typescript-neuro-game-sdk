@@ -24,6 +24,11 @@ export class NeuroClient {
   public url: string
 
   /**
+   * Function to run on connection to the Neuro API.
+   */
+  public onConnected: () => void
+
+  /**
    * Array of handlers for incoming actions from Neuro-sama.
    */
   public actionHandlers: ActionHandler[] = []
@@ -47,20 +52,21 @@ export class NeuroClient {
   constructor(url: string, game: string, onConnected: () => void) {
     this.url = url
     this.game = game
-    this.connect(onConnected)
+    this.onConnected = onConnected
+    this.connect()
   }
 
   /**
    * Initializes the WebSocket connection.
    * @param onConnected Callback invoked when the WebSocket connection is established.
    */
-  protected connect(onConnected: () => void) {
+  protected connect() {
     this.ws = new WebSocket(this.url)
 
     this.ws.onopen = () => {
       console.log('[NeuroClient] Connected to Neuro-sama server.')
       this.sendStartup()
-      onConnected()
+      this.onConnected()
     }
 
     this.ws.onmessage = (event: WebSocket.MessageEvent) => {
@@ -100,7 +106,7 @@ export class NeuroClient {
    * Sends a message over the WebSocket connection.
    * @param message The message to send.
    */
-  private sendMessage(message: OutgoingMessage) {
+  protected sendMessage(message: OutgoingMessage) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message))
     } else {
