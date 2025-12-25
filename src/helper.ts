@@ -157,7 +157,7 @@ export class NeuroClientWrapper extends NeuroClient {
         this.sendMessage(message)
     }
 
-    public forceActions(query: string, actionNames: string[], state?: string, ephemeralContext?: boolean, priority?: ActionForcePriorityEnum): void {
+    public forceActions(query: string, actionNames: string[], state?: string, ephemeralContext: boolean = false, priority: ActionForcePriorityEnum = ActionForcePriorityEnum.LOW): void {
         let unknownNames: string[] = []
         for (const name of actionNames) {
             if (!this.registeredActions.find(a => a.name === name)) unknownNames.push(name)
@@ -178,7 +178,7 @@ export class NeuroClientWrapper extends NeuroClient {
         this.sendMessage(message)
     }
 
-    public sendContext(messageText: string, silent?: boolean): void {
+    public sendContext(messageText: string, silent: boolean = true): void {
         this.loggingHandler(`Sending ${silent ? "silent " : ""}context to Neuro`, LogLevel.DEBUG)
         const message: OutgoingMessage = {
             command: 'context',
