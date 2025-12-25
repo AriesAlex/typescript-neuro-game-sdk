@@ -118,6 +118,17 @@ export class NeuroClientWrapper extends NeuroClient {
         }
     }
 
+    protected sendMessage(message: OutgoingMessage) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify(message))
+        } else {
+          this.loggingHandler(
+            `[NeuroClient] WebSocket is not open. Ready state: ${this.ws ? this.ws.readyState : 'No WebSocket instance'}`,
+            LogLevel.ERROR
+          )
+        }
+      }
+
     public registerActions(actions: Action[]) {
         const knownActions: string[] = []
         const newActions: Action[] = []
