@@ -121,7 +121,7 @@ export class NeuroClient {
    * Handles incoming messages from Neuro-sama.
    * @param data The message data received.
    */
-  private handleMessage(data: any) {
+  protected handleMessage(data: any) {
     let message: IncomingMessage
     try {
       message = JSON.parse(data)
