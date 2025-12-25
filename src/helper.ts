@@ -95,7 +95,7 @@ export class NeuroClientWrapper extends NeuroClient {
             this.sendActionResult(data.id, true, `[NeuroClientWrapper] Unknown action: "${data.name}"`)
             return
         }
-        if (action.schema) {
+        if (action.schema && Object.keys(action.schema).length !== 0) {
             const schemaValidationResult = validate(actionParams, action.schema)
             if (!schemaValidationResult.valid) {
                 const messagesArray: string[] = []
