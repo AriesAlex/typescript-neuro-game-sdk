@@ -9,8 +9,6 @@ export { Action, ActionData, ActionForcePriorityEnum } from "./types"
  * This is a wrapper class intended to help automate some common actions with the NeuroClient.
  */
 export class NeuroClientWrapper extends NeuroClient {
-    public actionHandled: boolean = true
-
     constructor(url: string, game: string, onConnected: () => void = () => undefined) {
         super(url, game, onConnected)
         this.actionHandlers.push(this.handleActionMessage)
