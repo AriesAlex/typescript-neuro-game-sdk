@@ -47,7 +47,7 @@ export class NeuroClientWrapper extends NeuroClient {
         try {
             message = JSON.parse(data)
         } catch (error: any) {
-            console.error('[NeuroClientWrapper] Invalid JSON received:', data)
+            this.loggingHandler(`[NeuroClientWrapper] Invalid JSON received: ${data}`, LogLevel.ERROR)
             return
         }
         switch (message.command) {
@@ -116,7 +116,7 @@ export class NeuroClientWrapper extends NeuroClient {
                 handler({ id: data.id, name: data.name, params: actionParams } as ActionData)
             }
         } else {
-            console.warn('[NeuroClientWrapper] No action handlers registered.')
+            this.loggingHandler('[NeuroClientWrapper] No action handlers registered.', LogLevel.ERROR)
         }
     }
 
