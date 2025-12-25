@@ -122,9 +122,16 @@ export class NeuroClientWrapper extends NeuroClient {
 
     public registerActions(actions: Action[]) {
         const knownActions: string[] = []
-        for (const a of actions) if (this.registeredActions.find(_a => a.name === _a.name)) knownActions.push(a.name);
+        const newActions: Action[] = []
+
+        for (const a of actions) {
+            if (this.registeredActions.find(_a => a.name === _a.name)) {
+                knownActions.push(a.name);
+            } else {
+                newActions.push(a);
+            }
+        }
         if (knownActions.length !== 0) this.loggingHandler(`Duplicate action registered: "${knownActions.join('", "')}"\nThe Neuro server will ignore those registrations.`, LogLevel.WARN);
-        this.registeredActions.push(...actions)
 
         const message: OutgoingMessage = {
             command: 'actions/register',
@@ -135,14 +142,14 @@ export class NeuroClientWrapper extends NeuroClient {
         }
 
         this.sendMessage(message)
+        this.registeredActions.push(...newActions)
     }
 
     public unregisterActions(actionNames: string[]) {
         const unknownNames: string[] = []
         for (const n of actionNames) {
             const action = this.registeredActions.findIndex(a => a.name === n)
-            if (action === -1) unknownNames.push(this.registeredActions[action].name)
-            else this.registeredActions.splice(action, 1)
+            if (action === -1) unknownNames.push(n)
         }
         if (unknownNames.length !== 0) this.loggingHandler(`Actions not registered: "${unknownNames.join('", "')}"\nThe Neuro server will ignore those unregistrations.`, LogLevel.INFO)
 
@@ -155,6 +162,11 @@ export class NeuroClientWrapper extends NeuroClient {
         }
 
         this.sendMessage(message)
+
+        for (const n of actionNames) {
+            const action = this.registeredActions.findIndex(a => a.name === n)
+            if (action !== -1) this.registeredActions.splice(action, 1)
+        }
     }
 
     public forceActions(query: string, actionNames: string[], state?: string, ephemeralContext: boolean = false, priority: ActionForcePriorityEnum = ActionForcePriorityEnum.LOW): void {
