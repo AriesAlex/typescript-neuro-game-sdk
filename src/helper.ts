@@ -103,7 +103,7 @@ export class NeuroClientWrapper extends NeuroClient {
                 });
                 if (messagesArray.length === 0) messagesArray.push('Unknown schema validation error.');
                 const schemaFailures = `- ${messagesArray.join('\n- ')}`;
-                const message = `[NeuroClientWrapper] Your inputs for the action "${data.name}" did not pass schema validation.\n\n' + schemaFailures + '\n\nPlease pay attention to the schema and the above errors if you choose to retry.`;
+                const message = `[NeuroClientWrapper] Your inputs for the action "${data.name}" did not pass schema validation.\n\n' + ${schemaFailures} + '\n\nPlease pay attention to the schema and the above errors if you choose to retry.`;
                 this.sendActionResult(data.id, false, message)
                 return
             }
