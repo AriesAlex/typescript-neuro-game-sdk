@@ -40,6 +40,15 @@
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@rollup/plugin-typescript": "^8.3.3",
     "rollup": "^2.70.1",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "jsonschema": "^1.5.0"
+  },
+  "peerDependencies": {
+    "jsonschema": "^1.5.0"
+  },
+  "peerDependenciesMeta": {
+    "jsonschema": {
+      "optional": true
+    }
   }
 }
