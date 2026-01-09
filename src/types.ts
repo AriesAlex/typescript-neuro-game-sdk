@@ -84,7 +84,7 @@ export interface Action {
 /**
  * This is parsed action data received from Neuro, ready to be used by handlers.
  */
-export interface ActionData {
+export interface ActionData<T extends JSONSchema7Object | undefined = any> {
   /**
    * The ID of the action attempt, assigned by the server.
    * You will want to use this when returning action results.
@@ -101,7 +101,7 @@ export interface ActionData {
    * 
    * If no params are sent, this property will simply be an empty object {}.
    */
-  params: JSONSchema7Object
+  params: T
 }
 
 /**
