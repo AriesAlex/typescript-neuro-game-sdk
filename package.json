@@ -1,6 +1,6 @@
 {
   "name": "neuro-game-sdk",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A TypeScript/JavaScript SDK for integrating games with Neuro-sama AI streamer.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
