@@ -102,7 +102,7 @@ export interface ActionData<T extends JSONSchema7Object | undefined = any> {
    * 
    * If no params are sent, this property will simply be an empty object {}.
    */
-  params: T
+  params?: T
 }
 
 /**
