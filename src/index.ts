@@ -169,17 +169,15 @@ interface ForceActionsMessageData {
    * Ranges from `low` to `critical`. `critical` cuts off speech immediately, `medium` and `high` does some prompting to finish speaking earlier/respond ASAP.
    * Previously always set to low.
    */
-  priority?: _ActionForcePriority
+  priority?: ActionForcePriorityEnum
 }
 
-type _ActionForcePriority = 'low' | 'medium' | 'high' | 'critical';
-
-export const ActionForcePriorityEnum = {
-  LOW: 'low',
-  MEDIUM: 'medium',
-  HIGH: 'high',
-  CRITICAL: 'critical'
-} as const
+export const enum ActionForcePriorityEnum {
+  LOW = "low",
+  MEDIUM = "medium",
+  HIGH = "high",
+  CRITICAL = "critical",
+}
 
 /**
  * Data for 'action/result' message.
@@ -446,7 +444,7 @@ export class NeuroClient {
     actionNames: string[],
     state?: string,
     ephemeralContext: boolean = false,
-    priority: _ActionForcePriority = ActionForcePriorityEnum.LOW
+    priority: ActionForcePriorityEnum = ActionForcePriorityEnum.LOW
   ) {
     const message: OutgoingMessage = {
       command: 'actions/force',
