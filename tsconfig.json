@@ -10,7 +10,8 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "importHelpers": false,
-    "preserveConstEnums": true
+    "preserveConstEnums": true,
+    "isolatedDeclarations": true
   },
   "include": ["src/**/*"]
 }

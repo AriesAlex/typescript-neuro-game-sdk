@@ -388,7 +388,7 @@ export class NeuroClient {
    * @param messageText A plaintext message that describes what is happening in the game.
    * @param silent If true, the message will be added to Neuro's context without prompting her to respond to it.
    */
-  public sendContext(messageText: string, silent: boolean = false) {
+  public sendContext(messageText: string, silent: boolean = false): void {
     const message: OutgoingMessage = {
       command: 'context',
       game: this.game,
@@ -404,7 +404,7 @@ export class NeuroClient {
    * Registers one or more actions for Neuro to use.
    * @param actions An array of actions to be registered.
    */
-  public registerActions(actions: Action[]) {
+  public registerActions(actions: Action[]): void {
     const message: OutgoingMessage = {
       command: 'actions/register',
       game: this.game,
@@ -419,7 +419,7 @@ export class NeuroClient {
    * Unregisters one or more actions, preventing Neuro from using them anymore.
    * @param actionNames The names of the actions to unregister.
    */
-  public unregisterActions(actionNames: string[]) {
+  public unregisterActions(actionNames: string[]): void {
     const message: OutgoingMessage = {
       command: 'actions/unregister',
       game: this.game,
@@ -445,7 +445,7 @@ export class NeuroClient {
     state?: string,
     ephemeralContext: boolean = false,
     priority: ActionForcePriorityEnum = ActionForcePriorityEnum.LOW
-  ) {
+  ): void {
     const message: OutgoingMessage = {
       command: 'actions/force',
       game: this.game,
@@ -467,7 +467,7 @@ export class NeuroClient {
    * @param success Whether or not the action was successful.
    * @param messageText A plaintext message that describes what happened when the action was executed.
    */
-  public sendActionResult(id: string, success: boolean, messageText?: string) {
+  public sendActionResult(id: string, success: boolean, messageText?: string): void {
     if (!success) console.warn(`[NeuroClient] Empty messageText field even though success was false!`)
     const message: OutgoingMessage = {
       command: 'action/result',
@@ -486,14 +486,14 @@ export class NeuroClient {
    * Multiple handlers can be registered.
    * @param handler The action handler function.
    */
-  public onAction(handler: ActionHandler) {
+  public onAction(handler: ActionHandler): void {
     this.actionHandlers.push(handler)
   }
 
   /**
    * Closes the WebSocket connection.
    */
-  public disconnect() {
+  public disconnect(): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.close()
     }
