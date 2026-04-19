@@ -17,6 +17,7 @@ type IncomingData = GracefulShutdownMessageData | ActionMessageData
 
 /**
  * Data for 'shutdown/graceful' from Neuro.
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/PROPOSALS.md#graceful-shutdown
  */
 interface GracefulShutdownMessageData {
   /** 
@@ -29,6 +30,7 @@ interface GracefulShutdownMessageData {
 
 /**
  * Messages sent by the game (client) to Neuro (server).
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#neuro-api-specification
  */
 interface OutgoingMessage {
   /** The websocket command. */
@@ -49,6 +51,7 @@ interface OutgoingMessage {
 
 /**
  * Messages sent by Neuro (server) to the game (client).
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#neuro-api-specification
  */
 interface IncomingMessage {
   /** The websocket command. */
@@ -60,6 +63,7 @@ interface IncomingMessage {
 
 /**
  * An action is a registerable command that Neuro can execute whenever she wants.
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#action
  */
 export interface Action {
   /**
@@ -83,6 +87,7 @@ export interface Action {
 
 /**
  * This is parsed action data received from Neuro, ready to be used by handlers.
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#action-1
  */
 export interface ActionData<T extends JSONSchema7Object | undefined = any> {
   /**
@@ -96,7 +101,7 @@ export interface ActionData<T extends JSONSchema7Object | undefined = any> {
   name: string
   /**
    * Parameter data sent from Neuro.
-   * This will automatically be parsed into a JSON object for you.
+   * This will automatically be parsed into a JavaScript object for you.
    * You also don't need to worry about this being potentially invalid JSON, as the SDK automatically handles that.
    * 
    * If no params are sent, this property will simply be an empty object {}.
@@ -106,6 +111,7 @@ export interface ActionData<T extends JSONSchema7Object | undefined = any> {
 
 /**
  * Data for a 'context' message.
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#context
  */
 interface ContextMessageData {
   /**
@@ -123,6 +129,7 @@ interface ContextMessageData {
 
 /**
  * Data for 'actions/register' message.
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#register-actions
  */
 interface RegisterActionsMessageData {
   /** An array of actions to be registered. */
@@ -131,6 +138,7 @@ interface RegisterActionsMessageData {
 
 /**
  * Data for 'actions/unregister' message.
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#unregister-actions
  */
 interface UnregisterActionsMessageData {
   /** The names of the actions to unregister. */
@@ -139,6 +147,7 @@ interface UnregisterActionsMessageData {
 
 /**
  * Data for 'actions/force' message.
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#force-actions
  */
 interface ForceActionsMessageData {
   /**
@@ -165,8 +174,12 @@ interface ForceActionsMessageData {
 
   /**
    * The priority of action forces.
-   * Ranges from `low` to `critical`. `critical` cuts off speech immediately, `medium` and `high` does some prompting to finish speaking earlier/respond ASAP.
-   * Previously always set to low.
+   * - {@link ActionForcePriorityEnum.LOW LOW} gracefully waits for Neuro to finish speaking before responding.
+   * - {@link ActionForcePriorityEnum.MEDIUM MEDIUM} causes her to finish speaking faster.
+   * - {@link ActionForcePriorityEnum.HIGH HIGH} causes her to shorten her utterance and process the force.
+   * - {@link ActionForcePriorityEnum.CRITICAL CRITICAL} interrupts her and forces her to respond at once. Use with caution, this can lead to abrupt/jarring interruptions.
+   * 
+   * Previously always set to (and still defaults to) low.
    */
   priority?: ActionForcePriorityEnum
 }
@@ -180,6 +193,7 @@ export const enum ActionForcePriorityEnum {
 
 /**
  * Data for 'action/result' message.
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#action-result
  */
 interface ActionResultMessageData {
   /**
