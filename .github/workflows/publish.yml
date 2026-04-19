@@ -53,4 +53,6 @@ jobs:
                 git push
             
             - name: Publish to npm
-              run: pnpm publish --access public
+              run: |
+                pnpm publish --access public
+                pnpm dlx jsr publish
