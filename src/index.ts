@@ -1,4 +1,3 @@
-import WebSocket from 'modern-isomorphic-ws'
 import type { JSONSchema7, JSONSchema7Object } from 'json-schema';
 
 /**
@@ -256,12 +255,12 @@ export class NeuroClient {
   /**
    * Handler for WebSocket 'close' events.
    */
-  public onClose?: (event: WebSocket.CloseEvent) => void
+  public onClose?: (event: CloseEvent) => void
 
   /**
    * Handler for WebSocket 'error' events.
    */
-  public onError?: (error: WebSocket.ErrorEvent) => void
+  public onError?: (error: Event) => void
 
   /**
    * Creates an instance of NeuroClient.
@@ -288,12 +287,12 @@ export class NeuroClient {
       onConnected()
     }
 
-    this.ws.onmessage = (event: WebSocket.MessageEvent) => {
+    this.ws.onmessage = (event: MessageEvent) => {
       const data = typeof event.data === 'string' ? event.data : ''
       this.handleMessage(data)
     }
 
-    this.ws.onclose = (event: WebSocket.CloseEvent) => {
+    this.ws.onclose = (event: CloseEvent) => {
       if (this.onClose) {
         this.onClose(event)
       } else {
@@ -301,7 +300,7 @@ export class NeuroClient {
       }
     }
 
-    this.ws.onerror = (error: WebSocket.ErrorEvent) => {
+    this.ws.onerror = (error: Event) => {
       if (this.onError) {
         this.onError(error)
       } else {

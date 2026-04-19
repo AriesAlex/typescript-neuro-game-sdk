@@ -42,9 +42,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@types/json-schema": "7.0.15",
-    "@types/ws": "^8.18.1",
-    "modern-isomorphic-ws": "^1.0.5"
+    "@types/json-schema": "7.0.15"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.2",
