@@ -143,6 +143,17 @@ const neuroClient = new NeuroClient(NEURO_SERVER_URL, GAME_NAME, () => {
 
 > Happy coding! <3 - ArieX
 
+## Known issues
+
+### "Updating to version 1.0.11+ causes an error about WebSocket not being defined."
+
+This error is caused because your Node version is too old.
+As of Node 21, the WebSocket global is now available behind a flag. From Node 22.4.0 onwards, this is available without requiring a flag to be passed.
+Node 20 is marked as EoL from 30/04/2026, and Node 21 has already been EoL as of the writing of this section.
+
+If you're on Node 20 or earlier, you must use version 1.0.10 or earlier.
+If you're between Node 21 and Node 22.4.0 and you can't update for whatever reason, use the experimental flag for enabling the WebSocket global.
+
 ## Projects using this SDK
 
 The following integrations use this SDK:
