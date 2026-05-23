@@ -23,7 +23,7 @@
   "scripts": {
     "dev": "tsdown --watch",
     "build": "tsdown",
-    "prepare": "npm run build"
+    "prepare": "pnpm run build"
   },
   "repository": {
     "type": "git",
