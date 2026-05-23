@@ -1,4 +1,4 @@
-import type { JSONSchema7, JSONSchema7Object } from 'json-schema';
+import type { JSONSchema7 } from 'json-schema';
 
 /**
  * Proposed commands, not used by Neuro yet:
@@ -89,7 +89,7 @@ export interface Action {
  * This is parsed action data received from Neuro, ready to be used by handlers.
  * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#action-1
  */
-export interface ActionData<T extends JSONSchema7Object | undefined = any> {
+export interface ActionData<T extends unknown | undefined = any> {
   /**
    * The ID of the action attempt, assigned by the server.
    * You will want to use this when returning action results.
