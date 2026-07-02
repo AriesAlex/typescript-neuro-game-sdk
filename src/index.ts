@@ -9,11 +9,31 @@ import type { JSONSchema7, JSONSchema7Object } from 'json-schema';
  * As suck, this SDK does not implement handling of those commands.
  */
 type IncomingCommands = "action"
+  | "startup"
   | "actions/reregister_all"
   | "shutdown/graceful"
   | "shutdown/immediate"
 
-type IncomingData = GracefulShutdownMessageData | ActionMessageData
+type IncomingData = GracefulShutdownMessageData | ActionMessageData | StartupAcknowledgementData
+
+interface StartupAcknowledgementData {
+  /** Various metadata about the current session. */
+  session: {
+    /**
+     * The server's websocket session identifier.
+     * Treat this as an opaque routing/debug value.
+     */
+    sessionId: string;
+    /**
+     * The stable character identifier, e.g. `"neuro"`.
+     */
+    characterId: string;
+    /**
+     * The human-readable character name. 
+     */
+    displayName: string;
+  }
+}
 
 /**
  * Data for 'shutdown/graceful' from Neuro.
@@ -262,6 +282,29 @@ export class NeuroClient {
   public url: string
 
   /**
+   * The server's WebSocket session identifier.
+   * This is not intended for use outside of logging or debugging.
+   */
+  public sessionId?: string
+
+  /**
+   * The ID of the character connected.
+   * This can be used to identify the connected cahracter with a stable string.
+   */
+  public characterId?: string
+
+  /**
+   * The human-readable character name.
+   * Use this to display the currently connected character instead of the ID. 
+   */
+  public displayName?: string
+
+  /**
+   * Replace this with your own function if you wish.
+   */
+  public filledDetails(): void {  }
+
+  /**
    * Array of handlers for incoming actions from Neuro-sama.
    */
   public actionHandlers: ActionHandler[] = []
@@ -365,6 +408,9 @@ export class NeuroClient {
       case 'action':
         this.handleActionMessage(message.data as ActionMessageData)
         break
+      case 'startup':
+        this.handleStartupAcknowledgement(message.data as StartupAcknowledgementData)
+        break
       default:
         console.warn('[NeuroClient] Received unknown/unimplemented command:', message.command)
     }
@@ -394,6 +440,14 @@ export class NeuroClient {
     } else {
       console.warn('[NeuroClient] No action handlers registered.')
     }
+  }
+
+  private handleStartupAcknowledgement(data: StartupAcknowledgementData) {
+    const { session } = data
+    this.sessionId = session.sessionId
+    this.characterId = session.characterId
+    this.displayName = session.displayName
+    this.filledDetails()
   }
 
   /**
