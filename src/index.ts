@@ -1,4 +1,4 @@
-import type { JSONSchema7 } from 'json-schema';
+import type { JSONSchema7, JSONSchema7Object } from 'json-schema';
 
 /**
  * Proposed commands, not used by Neuro yet:
