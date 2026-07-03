@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.2",
+    "jsr": "^0.14.3",
     "tsdown": "^0.21.9",
     "typescript": "^6.0.3"
   }

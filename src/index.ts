@@ -6,7 +6,7 @@ import type { JSONSchema7, JSONSchema7Object } from 'json-schema';
  * - "shutdown/graceful"
  * - "shutdown/immediate"
  * 
- * As suck, this SDK does not implement handling of those commands.
+ * As such, this SDK does not implement handling of those commands.
  */
 type IncomingCommands = "action"
   | "startup"
