@@ -57,4 +57,4 @@ jobs:
             - name: Publish to npm
               run: |
                 pnpm publish --access public
-                pnpm jsr publish
+                # pnpm jsr publish
