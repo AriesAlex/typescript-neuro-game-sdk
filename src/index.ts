@@ -1,52 +1,6 @@
 import type { JSONSchema7, JSONSchema7Object } from 'json-schema';
 
-/**
- * Proposed commands, not used by Neuro yet:
- * - "actions/reregister_all"
- * - "shutdown/graceful"
- * - "shutdown/immediate"
- * 
- * As such, this SDK does not implement handling of those commands.
- */
-type IncomingCommands = "action"
-  | "startup"
-  | "actions/reregister_all"
-  | "shutdown/graceful"
-  | "shutdown/immediate"
-
-type IncomingData = GracefulShutdownMessageData | ActionMessageData | StartupAcknowledgementData
-
-interface StartupAcknowledgementData {
-  /** Various metadata about the current session. */
-  session: {
-    /**
-     * The server's websocket session identifier.
-     * Treat this as an opaque routing/debug value.
-     */
-    sessionId: string;
-    /**
-     * The stable character identifier, e.g. `"neuro"`.
-     */
-    characterId: string;
-    /**
-     * The human-readable character name. 
-     */
-    displayName: string;
-  }
-}
-
-/**
- * Data for 'shutdown/graceful' from Neuro.
- * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/PROPOSALS.md#graceful-shutdown
- */
-interface GracefulShutdownMessageData {
-  /** 
-   * Whether or not Neuro wants to shut down the game.
-   * If `true`, save the game and return to main menu if possible.
-   * If `false`, cancel the shutdown process.
-   */
-  wants_shutdown: boolean
-}
+//#region Base interfaces
 
 /**
  * Messages sent by the game (client) to Neuro (server).
@@ -75,10 +29,52 @@ interface OutgoingMessage {
  */
 interface IncomingMessage {
   /** The websocket command. */
-  command: IncomingCommands
+  command: string
 
   /** The command data, may not be present for some commands. */
-  data?: IncomingData
+  data?: any
+}
+
+//#endregion
+
+//#region Standard client
+
+interface StartupAcknowledgementData {
+  /** Various metadata about the current session. */
+  session: {
+    /**
+     * The server's websocket session identifier.
+     * Treat this as an opaque routing/debug value.
+     */
+    sessionId: string;
+    /**
+     * The stable character identifier, e.g. `"neuro"`.
+     */
+    characterId: string;
+    /**
+     * The human-readable character name. 
+     */
+    displayName: string;
+  }
+}
+
+interface SpeechFinishedData {
+  isFinal: boolean
+  cancelled?: boolean
+  reason?: boolean
+}
+
+/**
+ * Data for 'shutdown/graceful' from Neuro.
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/PROPOSALS.md#graceful-shutdown
+ */
+interface GracefulShutdownMessageData {
+  /** 
+   * Whether or not Neuro wants to shut down the game.
+   * If `true`, save the game and return to main menu if possible.
+   * If `false`, cancel the shutdown process.
+   */
+  wants_shutdown: boolean
 }
 
 /**
@@ -262,6 +258,8 @@ interface ActionMessageData {
  */
 type ActionHandler = (actionData: ActionData) => void
 
+type SpeechHandler = (speechData: SpeechFinishedData) => void
+
 /**
  * The NeuroClient class handles communication with Neuro-sama's server.
  */
@@ -308,6 +306,8 @@ export class NeuroClient {
    * Array of handlers for incoming actions from Neuro-sama.
    */
   public actionHandlers: ActionHandler[] = []
+
+  public speechHandlers: SpeechHandler[] = []
 
   /**
    * Handler for WebSocket 'close' events.
@@ -450,6 +450,10 @@ export class NeuroClient {
     this.filledDetails()
   }
 
+  private handleSpeechFinished(data: SpeechFinishedData): void {
+
+  }
+
   /**
    * Sends a 'context' message to let Neuro know about something that is happening in game.
    * @param messageText A plaintext message that describes what is happening in the game.
@@ -462,7 +466,7 @@ export class NeuroClient {
       data: {
         message: messageText,
         silent: silent,
-      } as ContextMessageData,
+      } satisfies ContextMessageData,
     }
     this.sendMessage(message)
   }
@@ -477,7 +481,7 @@ export class NeuroClient {
       game: this.game,
       data: {
         actions: actions,
-      } as RegisterActionsMessageData,
+      } satisfies RegisterActionsMessageData,
     }
     this.sendMessage(message)
   }
@@ -492,7 +496,7 @@ export class NeuroClient {
       game: this.game,
       data: {
         action_names: actionNames,
-      } as UnregisterActionsMessageData,
+      } satisfies UnregisterActionsMessageData,
     }
     this.sendMessage(message)
   }
@@ -522,7 +526,7 @@ export class NeuroClient {
         ephemeral_context: ephemeralContext,
         priority,
         action_names: actionNames,
-      } as ForceActionsMessageData,
+      } satisfies ForceActionsMessageData,
     }
     this.sendMessage(message)
   }
@@ -543,7 +547,7 @@ export class NeuroClient {
         id: id,
         success: success,
         message: messageText,
-      } as ActionResultMessageData,
+      } satisfies ActionResultMessageData,
     }
     this.sendMessage(message)
   }
@@ -557,6 +561,10 @@ export class NeuroClient {
     this.actionHandlers.push(handler)
   }
 
+  public onSpeechFinished(handler: SpeechHandler): void {
+    this.speechHandlers.push(handler)
+  }
+
   /**
    * Closes the WebSocket connection.
    */
@@ -566,3 +574,150 @@ export class NeuroClient {
     }
   }
 }
+
+//#endregion
+
+//#region Voice client
+
+interface StartVoiceSession extends OutgoingMessage {
+  command: "voice/start"
+}
+
+interface StopVoiceSession extends OutgoingMessage {
+  command: "voice/stop"
+}
+
+interface RegisterSpeakerPacket extends OutgoingMessage {
+  command: "voice/speakers/register"
+  data: {
+    speakers: {
+      id: number // unique uint16
+      name: string // display name of the speaker, sent to Neuro
+    }[]
+  }
+}
+
+interface UnregisterSpeakerPacket extends OutgoingMessage {
+  command: "voice/speakers/unregister"
+  data: {
+    ids: number[]
+  }
+}
+
+interface IncomingVoiceReady extends IncomingMessage {
+  command: "voice/ready"
+  data: {
+    sample_rate: number // always set to 48000 for now but could be useful in the future
+    channels: number // mon channels, both directions
+  }
+}
+
+interface IncomingVoiceUnavailable extends IncomingMessage {
+  command: "voice/unavailable"
+  data: {
+    reason: string // why can't the server support it?
+  }
+}
+
+interface IncomingVoiceSpeaking extends IncomingMessage {
+  command: "voice/speaking"
+  data: {
+    speaking: boolean
+  }
+}
+
+interface IncomingVoiceCancelled extends IncomingMessage {
+  command: "voice/cancelled"
+}
+
+type IncomingVoiceMessages = IncomingVoiceReady | IncomingVoiceUnavailable | IncomingVoiceSpeaking | IncomingVoiceCancelled
+
+type OutgoingVoiceMessages = StartVoiceSession | StopVoiceSession | RegisterSpeakerPacket | UnregisterSpeakerPacket
+
+export class NeuroVoiceClient {
+  public ws?: WebSocket
+  public sampleRate?: number
+  public channels?: number
+  public game: string
+  public url: string
+  constructor(gameName: string, wsUrl: string, onConnected: () => void) {
+    this.url = wsUrl
+    this.game = gameName
+    this.connect(onConnected)
+  }
+
+  private connect(onConnected: () => void) {
+    this.ws = new WebSocket(this.url)
+
+    this.ws.onopen = () => {
+      console.log('[NeuroVoiceClient] WebSocket connection open')
+      this.startSession()
+      onConnected()
+    }
+
+    this.ws.onclose = () => {
+      console.log('[NeuroVoiceClient] WebSocket connection closed')
+    }
+
+    this.ws.onerror = (e) => {
+      console.error('[NeuroVoiceClient] WebSocket error:', e)
+    }
+
+    this.ws.onmessage = (msg) => {
+      const data: IncomingVoiceMessages = JSON.parse(msg.data)
+      if (data.command === "voice/unavailable") {
+        console.warn("[NeuroVoiceClient] Neuro API server does not support voice.")
+        delete this.ws
+      }
+    }
+  }
+
+  private sendMessage(message: OutgoingVoiceMessages | ArrayBuffer) {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(message instanceof ArrayBuffer ? message : JSON.stringify(message))
+    } else {
+      console.error('[NeuroVoiceClient] Couldn\'t send message; is the voice socket closed?')
+    }
+  }
+
+  startSession(): void {
+    this.sendMessage({ command: "voice/start", game: this.game })
+  }
+
+  stopSession(): void {
+    this.sendMessage({ command: "voice/stop", game: this.game })
+  }
+
+  registerVoiceChannel(speakers: RegisterSpeakerPacket['data']['speakers']): void {
+    this.sendMessage({ command: "voice/speakers/register", game: this.game, data: { speakers } })
+  }
+
+  unregisterVoiceChannel(ids: UnregisterSpeakerPacket['data']['ids']): void {
+    this.sendMessage({ command: "voice/speakers/unregister", game: this.game, data: { ids } })
+  }
+
+  sendAudio(id: number, audio: Float32Array): void {
+    if (!Number.isInteger(id) || id < 0 || id > 0xffff) {
+      throw new RangeError("The ID must be a uint16 (integer between 0 and 65535)")
+    }
+
+    if (audio.length % 1 !== 0) {
+      throw new RangeError("Invalid sample count")
+    }
+
+    const buffer = new ArrayBuffer(4 + audio.length * 4)
+    const view = new DataView(buffer)
+
+    view.setUint8(0, 1) // Protocol version
+    view.setUint8(1, 0) // Flags (reserved)
+    view.setUint16(2, id, true) // Speaker ID
+
+    for (let i = 0; i < audio.length; i++) {
+      view.setFloat32(4 + i * 4, audio[i], true)
+    }
+
+    this.sendMessage(buffer)
+  }
+}
+
+//#endregion
