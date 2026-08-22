@@ -640,6 +640,9 @@ interface IncomingVoiceUnavailable extends IncomingMessage {
 interface IncomingVoiceSpeaking extends IncomingMessage {
   command: "voice/speaking"
   data: {
+    /**
+     * If Neuro is speaking when this packet is sent
+     */
     speaking: boolean
   }
 }
@@ -652,6 +655,9 @@ type IncomingVoiceMessages = IncomingVoiceReady | IncomingVoiceUnavailable | Inc
 
 type OutgoingVoiceMessages = StartVoiceSession | StopVoiceSession | RegisterSpeakerPacket | UnregisterSpeakerPacket
 
+type SpeakingHandler = (audio: Float32Array) => void
+
+type AudioControlHandler = (packet: IncomingVoiceSpeaking | IncomingVoiceCancelled) => void
 
 /**
  * The NeuroVoiceClient class handles communication with the Neuro API's voice chat endpoint.
@@ -662,6 +668,16 @@ export class NeuroVoiceClient {
   public channels?: number
   public game: string
   public url: string
+  public speakingHandler: SpeakingHandler[] = []
+  public controlPacketHandler: AudioControlHandler[] = []
+
+  public onClose(_event: CloseEvent): void {
+    console.warn('[NeuroVoiceClient] WebSocket connection closed')
+  }
+  public onError(error: Event): void {
+    console.error('[NeuroVoiceClient] WebSocket error:', error)
+  }
+
   constructor(gameName: string, wsUrl: string, onConnected: () => void) {
     this.url = wsUrl
     this.game = gameName
@@ -677,19 +693,30 @@ export class NeuroVoiceClient {
       onConnected()
     }
 
-    this.ws.onclose = () => {
-      console.log('[NeuroVoiceClient] WebSocket connection closed')
+    this.ws.onclose = (e) => {
+      this.onClose(e)
     }
 
     this.ws.onerror = (e) => {
-      console.error('[NeuroVoiceClient] WebSocket error:', e)
+      this.onError(e)
     }
 
     this.ws.onmessage = (msg) => {
-      const data: IncomingVoiceMessages = JSON.parse(msg.data)
-      if (data.command === "voice/unavailable") {
-        console.warn("[NeuroVoiceClient] Neuro API server does not support voice.")
-        delete this.ws
+      const data: IncomingVoiceMessages | ArrayBuffer = JSON.parse(msg.data)
+      if (data instanceof ArrayBuffer) {
+        this.handleAudio(data)
+      }
+      else {
+        switch (data.command) {
+          case 'voice/ready':
+            console.warn("[NeuroVoiceClient] Neuro API server does not support voice.")
+            delete this.ws
+            break
+          case 'voice/speaking':
+          case 'voice/cancelled':
+            this.handleControlPacket(data)
+            break
+        }
       }
     }
   }
@@ -700,6 +727,37 @@ export class NeuroVoiceClient {
     } else {
       console.error('[NeuroVoiceClient] Couldn\'t send message; is the voice socket closed?')
     }
+  }
+
+  private handleAudio(message: ArrayBuffer) {
+    if (message.byteLength % 4 !== 0) {
+        throw new Error("PCM frame is not aligned to float32 samples");
+    }
+
+    const view = new DataView(message);
+    const samples = new Float32Array(message.byteLength / 4);
+
+    for (let i = 0; i < samples.length; i++) {
+        samples[i] = view.getFloat32(i * 4, true);
+    }
+
+    for (const handler of this.speakingHandler) {
+      handler(samples)
+    }
+  }
+
+  private handleControlPacket(message: IncomingVoiceSpeaking | IncomingVoiceCancelled) {
+    for (const handler of this.controlPacketHandler) {
+      handler(message)
+    }
+  }
+
+  onAudioReceived(handler: SpeakingHandler): void {
+    this.speakingHandler.push(handler)
+  }
+
+  onControlPacketReceived(handler: AudioControlHandler): void {
+    this.controlPacketHandler.push(handler)
   }
 
   /**
