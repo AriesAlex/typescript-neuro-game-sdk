@@ -795,6 +795,7 @@ export class NeuroVoiceClient {
    * Send audio data to Neuro via the audio endpoint.
    * @param id The ID number you assigned to the person speaking this audio
    * @param audio A {@link Float32Array} with PCM samples
+   * @throws A {@link RangeError} if the ID is not uint16 or the sample count is invalid.
    */
   sendAudio(id: number, audio: Float32Array): void {
     if (!Number.isInteger(id) || id < 0 || id > 0xffff) {
