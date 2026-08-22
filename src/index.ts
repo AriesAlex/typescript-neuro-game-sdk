@@ -591,8 +591,14 @@ interface RegisterSpeakerPacket extends OutgoingMessage {
   command: "voice/speakers/register"
   data: {
     speakers: {
-      id: number // unique uint16
-      name: string // display name of the speaker, sent to Neuro
+      /**
+       * An integer between 0 and 65535 which will be used to identify the speaker.
+       */
+      id: number
+      /**
+       * The display name that will be sent to Neuro.
+       */
+      name: string
     }[]
   }
 }
@@ -600,6 +606,9 @@ interface RegisterSpeakerPacket extends OutgoingMessage {
 interface UnregisterSpeakerPacket extends OutgoingMessage {
   command: "voice/speakers/unregister"
   data: {
+    /**
+     * The IDs that correspond to the people to unregister
+     */
     ids: number[]
   }
 }
@@ -607,15 +616,24 @@ interface UnregisterSpeakerPacket extends OutgoingMessage {
 interface IncomingVoiceReady extends IncomingMessage {
   command: "voice/ready"
   data: {
-    sample_rate: number // always set to 48000 for now but could be useful in the future
-    channels: number // mon channels, both directions
+    /**
+     * Always set to 48000 for now, however it should still be read
+     */
+    sample_rate: number
+    /**
+     * Amount of mono channels (in both directions)
+     */
+    channels: number
   }
 }
 
 interface IncomingVoiceUnavailable extends IncomingMessage {
   command: "voice/unavailable"
   data: {
-    reason: string // why can't the server support it?
+    /**
+     * Why the server can't accept it.
+     */
+    reason: string
   }
 }
 
@@ -634,6 +652,10 @@ type IncomingVoiceMessages = IncomingVoiceReady | IncomingVoiceUnavailable | Inc
 
 type OutgoingVoiceMessages = StartVoiceSession | StopVoiceSession | RegisterSpeakerPacket | UnregisterSpeakerPacket
 
+
+/**
+ * The NeuroVoiceClient class handles communication with the Neuro API's voice chat endpoint.
+ */
 export class NeuroVoiceClient {
   public ws?: WebSocket
   public sampleRate?: number
@@ -680,22 +702,42 @@ export class NeuroVoiceClient {
     }
   }
 
+  /**
+   * Start a new voice session.
+   * Automatically called when the voice client is constructed.
+   */
   startSession(): void {
     this.sendMessage({ command: "voice/start", game: this.game })
   }
 
+  /**
+   * Stop the current voice session.
+   */
   stopSession(): void {
     this.sendMessage({ command: "voice/stop", game: this.game })
   }
 
+  /**
+   * Register a new speaker in the voice channel.
+   * @param speakers An array of speaker info that will be sent to Neuro.
+   */
   registerVoiceChannel(speakers: RegisterSpeakerPacket['data']['speakers']): void {
     this.sendMessage({ command: "voice/speakers/register", game: this.game, data: { speakers } })
   }
 
+  /**
+   * Unregister speakers from the voice channel.
+   * @param ids An array of IDs that correspond to the people you want to unregister.
+   */
   unregisterVoiceChannel(ids: UnregisterSpeakerPacket['data']['ids']): void {
     this.sendMessage({ command: "voice/speakers/unregister", game: this.game, data: { ids } })
   }
 
+  /**
+   * Send audio data to Neuro via the audio endpoint.
+   * @param id The ID number you assigned to the person speaking this audio
+   * @param audio A {@link Float32Array} with PCM samples
+   */
   sendAudio(id: number, audio: Float32Array): void {
     if (!Number.isInteger(id) || id < 0 || id > 0xffff) {
       throw new RangeError("The ID must be a uint16 (integer between 0 and 65535)")
