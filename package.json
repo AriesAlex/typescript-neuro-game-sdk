@@ -45,9 +45,9 @@
     "@types/json-schema": "7.0.15"
   },
   "devDependencies": {
-    "@arethetypeswrong/core": "^0.18.2",
+    "@arethetypeswrong/core": "^0.18.5",
     "jsr": "^0.14.3",
-    "tsdown": "^0.22.14",
+    "tsdown": "^0.23.7",
     "typescript": "^7.0.2"
   }
 }

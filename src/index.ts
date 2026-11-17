@@ -144,6 +144,57 @@ interface ContextMessageData {
 }
 
 /**
+ * Data for a `speech/started` message.
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#speech-started
+ */
+interface SpeechStartedData {
+  /**
+   * An identifier for this line, chosen by the game (at most 256 characters).
+   * You will send it again in the matching speech/ended message.
+   * Use a new id every time a line is spoken: once a line has ended, a later speech/started with the same id is ignored.
+   * If several connections report the same line (e.g. one game process per character), they should all use the same id so that the line only counts once.
+   */
+  id: string
+
+  /**
+   * The name of whoever is speaking (at most 200 characters). **This information will be directly received by Neuro.**
+   */
+  speaker: string
+
+  /**
+   * What is being said (at most 4000 characters).
+   * If provided, Neuro hears it as the speaker saying it, so you should not also send the line as a `context` message.
+   * If omitted, she only knows that the speaker was talking.
+   * **This information will be directly received by Neuro.**
+   */
+  text?: string
+
+  /**
+   * How long the line is expected to take, as a whole number of milliseconds (at most 600000).
+   * This is only a safety net for when speech/ended never arrives: the line is then considered ended shortly after this duration, or after about 30 seconds if you did not provide one.
+   */
+  expected_duration_ms?: number
+
+  /**
+   * What Neuro should do once the dialogue has gone quiet.
+   * 
+   * - "never" means she is not prompted to respond.
+   * - "maybe" means she might comment on it, like she might with a non-silent context message.
+   * - "always" means she will respond to it.
+   * 
+   * If another line starts right after one ends, they count as one stretch of dialogue and only the reply of the last line is used.
+   */
+  reply: typeof SpeechStartedReplyModes[keyof typeof SpeechStartedReplyModes]
+  responder?: string
+}
+
+export const SpeechStartedReplyModes = {
+  NEVER: 'never',
+  MAYBE: 'maybe',
+  ALWAYS: 'always',
+} as const
+
+/**
  * Data for 'actions/register' message.
  * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#register-actions
  */
@@ -197,15 +248,22 @@ interface ForceActionsMessageData {
    * 
    * Previously always set to (and still defaults to) low.
    */
-  priority?: ActionForcePriorityEnum
+  priority?: typeof ActionForcePriorityEnum[keyof typeof ActionForcePriorityEnum]
+
+  /**
+   * Whether or not Neuro should be silent when responding to action forces.
+   * If `true`, Neuro will not say anything when picking her action.
+   * Does not affect priority or failure retries.
+   */
+  silent?: boolean
 }
 
-export const enum ActionForcePriorityEnum {
-  LOW = "low",
-  MEDIUM = "medium",
-  HIGH = "high",
-  CRITICAL = "critical",
-}
+export const ActionForcePriorityEnum = {
+  LOW: "low",
+  MEDIUM: "medium",
+  HIGH: "high",
+  CRITICAL: "critical",
+} as const
 
 /**
  * Data for 'action/result' message.
@@ -515,7 +573,7 @@ export class NeuroClient {
     actionNames: string[],
     state?: string,
     ephemeralContext: boolean = false,
-    priority: ActionForcePriorityEnum = ActionForcePriorityEnum.LOW
+    priority: typeof ActionForcePriorityEnum[keyof typeof ActionForcePriorityEnum] = ActionForcePriorityEnum.LOW
   ): void {
     const message: OutgoingMessage = {
       command: 'actions/force',
