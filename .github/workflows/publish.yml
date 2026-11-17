@@ -49,13 +49,13 @@ jobs:
             - name: Tag version
               if: inputs.bump != 'none'
               run: |
-                git reset --hard
-                pnpm version ${{ inputs.bump }}
+                pnpm version ${{ inputs.bump }} --no-git-tag-version
+                pnpm run version:jsr
+                git tag v$(node -p "require('./package.json').version")
             
             - name: Publish to npm
               run: |
                 pnpm publish --access public
-                pnpm run version:jsr
                 pnpm exec jsr publish
 
                 git push --follow-tags
