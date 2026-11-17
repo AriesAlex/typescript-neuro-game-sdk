@@ -1,6 +1,6 @@
 {
     "name": "@neurosama/game-sdk",
-    "version": "1.3.0",
+    "version": "1.3.3",
     "exports": "./src/index.ts",
     "license": "MIT",
     "publish": {
