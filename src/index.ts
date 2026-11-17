@@ -195,6 +195,17 @@ export const SpeechStartedReplyModes = {
 } as const
 
 /**
+ * Data for `speech/ended`
+ * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#speech-ended
+ */
+interface SpeechEndedData {
+  /**
+   * The id of the line that ended, as sent in `speech/started`.
+   */
+  id: string
+}
+
+/**
  * Data for 'actions/register' message.
  * @see https://github.com/VedalAI/neuro-sdk/blob/main/API/SPECIFICATION.md#register-actions
  */
@@ -248,14 +259,14 @@ interface ForceActionsMessageData {
    * 
    * Previously always set to (and still defaults to) low.
    */
-  priority?: typeof ActionForcePriorityEnum[keyof typeof ActionForcePriorityEnum]
+  priority: typeof ActionForcePriorityEnum[keyof typeof ActionForcePriorityEnum]
 
   /**
    * Whether or not Neuro should be silent when responding to action forces.
    * If `true`, Neuro will not say anything when picking her action.
    * Does not affect priority or failure retries.
    */
-  silent?: boolean
+  silent: boolean
 }
 
 export const ActionForcePriorityEnum = {
@@ -530,6 +541,36 @@ export class NeuroClient {
   }
 
   /**
+   * Sends a `speech/started` message to let Neuro know that in-game dialogue is being spoken.
+   */
+  public speechStarted(id: string, speaker: string, text?: string, duration?: number, reply: typeof SpeechStartedReplyModes[keyof typeof SpeechStartedReplyModes] = SpeechStartedReplyModes.MAYBE, responder?: string): void {
+    const message: OutgoingMessage = {
+      command: 'speech/started',
+      game: this.game,
+      data: {
+        id,
+        speaker,
+        text,
+        expected_duration_ms: duration,
+        reply,
+        responder,
+      } satisfies SpeechStartedData
+    }
+    this.sendMessage(message)
+  }
+
+  public speechEnded(id: string): void {
+    const message: OutgoingMessage = {
+      command: 'speech/ended',
+      game: this.game,
+      data: {
+        id
+      } satisfies SpeechEndedData
+    }
+    this.sendMessage(message)
+  }
+
+  /**
    * Registers one or more actions for Neuro to use.
    * @param actions An array of actions to be registered.
    */
@@ -567,13 +608,15 @@ export class NeuroClient {
    * @param state An arbitrary string that describes the current state of the game.
    * @param ephemeralContext If true, Neuro will only remember the context for the duration of the actions force.
    * @param priority The action force's priority level. Defaults to `low`.
+   * @param silent If true, Neuro picks an action without saying anything out loud about it. Failed actions are still retried as usual, and `priority` still applies.
    */
   public forceActions(
     query: string,
     actionNames: string[],
     state?: string,
     ephemeralContext: boolean = false,
-    priority: typeof ActionForcePriorityEnum[keyof typeof ActionForcePriorityEnum] = ActionForcePriorityEnum.LOW
+    priority: typeof ActionForcePriorityEnum[keyof typeof ActionForcePriorityEnum] = ActionForcePriorityEnum.LOW,
+    silent: boolean = false
   ): void {
     const message: OutgoingMessage = {
       command: 'actions/force',
@@ -584,6 +627,7 @@ export class NeuroClient {
         ephemeral_context: ephemeralContext,
         priority,
         action_names: actionNames,
+        silent
       } satisfies ForceActionsMessageData,
     }
     this.sendMessage(message)
