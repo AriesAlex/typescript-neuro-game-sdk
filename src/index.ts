@@ -519,10 +519,6 @@ export class NeuroClient {
     this.filledDetails()
   }
 
-  private handleSpeechFinished(data: SpeechFinishedData): void {
-
-  }
-
   /**
    * Sends a 'context' message to let Neuro know about something that is happening in game.
    * @param messageText A plaintext message that describes what is happening in the game.
