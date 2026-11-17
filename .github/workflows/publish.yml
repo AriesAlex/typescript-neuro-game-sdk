@@ -50,8 +50,11 @@ jobs:
               if: inputs.bump != 'none'
               run: |
                 pnpm version ${{ inputs.bump }} --no-git-tag-version
+                export VERSION=$(node -p "require('./package.json').version")
                 pnpm run version:jsr
-                git tag v$(node -p "require('./package.json').version")
+                git add .
+                git commit -m v$VERSION
+                git tag v$VERSION
             
             - name: Publish to npm
               run: |
