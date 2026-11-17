@@ -18,12 +18,13 @@
     }
   },
   "files": [
-    "dist/**/*"
+    "dist"
   ],
   "scripts": {
     "dev": "tsdown --watch",
     "build": "tsdown",
-    "prepare": "pnpm run build"
+    "prepare": "pnpm run build",
+    "version:jsr": "node ./jsr-version.mjs"
   },
   "repository": {
     "type": "git",

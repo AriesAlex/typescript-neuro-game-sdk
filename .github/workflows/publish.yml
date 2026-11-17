@@ -51,9 +51,11 @@ jobs:
               run: |
                 git reset --hard
                 pnpm version ${{ inputs.bump }}
-                git push
             
             - name: Publish to npm
               run: |
                 pnpm publish --access public
-                # pnpm jsr publish
+                pnpm run version:jsr
+                pnpm exec jsr publish
+
+                git push --follow-tags
