@@ -1,4 +1,4 @@
-import type { JSONSchema7, JSONSchema7Object } from 'json-schema';
+import type { JSONSchema7, JSONSchema7Object } from '@types/json-schema';
 
 //#region Base interfaces
 
